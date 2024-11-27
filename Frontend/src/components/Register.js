@@ -12,7 +12,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/auth/register', { email, password });
+      await api.post('/auth/register', { username,email, password });
       toast.success('Registration successful');
       navigate('/login');
     } catch (error) {
