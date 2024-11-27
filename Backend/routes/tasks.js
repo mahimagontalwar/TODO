@@ -52,7 +52,7 @@ router.put('/:id', authenticate, async (req, res) => {
 // Delete Task
 router.delete('/:id', authenticate, async (req, res) => {
     try {
-        const task = await Task.findById(req.params.id);
+        const task = await Task.findByIdAndDelete(req.params.id);
         if (!task || task.user.toString() !== req.user._id)
             return res.status(404).json({ message: 'Task not found' });
 
