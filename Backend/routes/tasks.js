@@ -4,6 +4,27 @@ const authenticate = require('../middlewares/auth');
 const { body, validationResult } = require('express-validator');
 const { validateTask } = require('../validators/taskValidators');
 const router = express.Router();
+const { exportTasks } = require('../controllers/taskController');
+const { importTasks } = require('../controllers/taskController');
+const { exportTasksAsPDF } = require('../controllers/taskController');
+// In tasks.js (routes file)
+const multer = require('multer');
+// Set up multer for file upload with a file size limit of 10MB
+const upload = multer({
+    dest: "uploads/", // Destination folder for temporary file storage
+    limits: {
+      fileSize: 10 * 1024 * 1024, // Limit file size to 10MB
+    },
+  });
+
+
+router.get('/export',authenticate, exportTasks);
+// router.post('/import',upload.single('file'), importTasks);
+// Define the import route
+// Export tasks as PDF
+router.get('/export/pdf',authenticate, exportTasksAsPDF);
+
+router.post('/import', upload.single('file'), importTasks);
 
 // Create Task
 router.post(
@@ -24,10 +45,37 @@ router.post(
     }
 );
 
-// Get All Tasks
+// // Get All Tasks
+// router.get('/', authenticate, async (req, res) => {
+//     try {
+//         const tasks = await Task.find({ user: req.user._id });
+//         res.json(tasks);
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// });
+
+// Get All Tasks with Search and Filter
 router.get('/', authenticate, async (req, res) => {
     try {
-        const tasks = await Task.find({ user: req.user._id });
+        // Initialize the filters object
+        const filters = { user: req.user._id }; // Ensure it only returns the user's tasks
+
+        // Dynamically add filters if query parameters are present
+        if (req.query.title) {
+            filters.title = { $regex: req.query.title, $options: 'i' }; // Case-insensitive search
+        }
+
+        if (req.query.status) {
+            filters.status = req.query.status;
+        }
+
+        if (req.query.user) {
+            filters.user = req.query.user;
+        }
+
+        // Find tasks using the filters
+        const tasks = await Task.find(filters);
         res.json(tasks);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -62,5 +110,7 @@ router.delete('/:id', authenticate, async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+
 
 module.exports = router;

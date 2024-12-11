@@ -2,10 +2,10 @@ const Joi = require('joi');
 
 const validateTask = (req, res, next) => {
   const schema = Joi.object({
-    title: Joi.string().max(10).required(),
+    title: Joi.string().max(10),
     description: Joi.string().max(20),
     status: Joi.string().max(10).required(),
-    user:Joi.string().required()
+    user:Joi.string()
   });
 
   const { error } = schema.validate(req.body);

@@ -5,6 +5,7 @@ import Register from './components/Register';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
 import api from './api/api';
+import TaskManager from './components/TaskManager';
 
 const App = () => {
   const [tasks, setTasks] = useState([]);
@@ -30,7 +31,10 @@ const App = () => {
             <>
               <TaskForm fetchTasks={fetchTasks} taskToEdit={taskToEdit} clearEdit={() => setTaskToEdit(null)} />
               <TaskList tasks={tasks} fetchTasks={fetchTasks} setTaskToEdit={setTaskToEdit} />
+              <TaskManager />
+              
             </>
+            
           }
         />
       </Routes>

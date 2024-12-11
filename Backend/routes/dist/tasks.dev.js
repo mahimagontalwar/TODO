@@ -19,7 +19,35 @@ var _require = require('express-validator'),
 var _require2 = require('../validators/taskValidators'),
     validateTask = _require2.validateTask;
 
-var router = express.Router(); // Create Task
+var router = express.Router();
+
+var _require3 = require('../controllers/taskController'),
+    exportTasks = _require3.exportTasks;
+
+var _require4 = require('../controllers/taskController'),
+    importTasks = _require4.importTasks;
+
+var _require5 = require('../controllers/taskController'),
+    exportTasksAsPDF = _require5.exportTasksAsPDF; // In tasks.js (routes file)
+
+
+var multer = require('multer'); // Set up multer for file upload with a file size limit of 10MB
+
+
+var upload = multer({
+  dest: "uploads/",
+  // Destination folder for temporary file storage
+  limits: {
+    fileSize: 10 * 1024 * 1024 // Limit file size to 10MB
+
+  }
+});
+router.get('/export', authenticate, exportTasks); // router.post('/import',upload.single('file'), importTasks);
+// Define the import route
+// Export tasks as PDF
+
+router.get('/export/pdf', authenticate, exportTasksAsPDF);
+router.post('/import', upload.single('file'), importTasks); // Create Task
 
 router.post('/', authenticate, validateTask, body('title').notEmpty().withMessage('Title is required'), function _callee(req, res) {
   var errors, task;
@@ -64,39 +92,68 @@ router.post('/', authenticate, validateTask, body('title').notEmpty().withMessag
       }
     }
   }, null, null, [[3, 10]]);
-}); // Get All Tasks
+}); // // Get All Tasks
+// router.get('/', authenticate, async (req, res) => {
+//     try {
+//         const tasks = await Task.find({ user: req.user._id });
+//         res.json(tasks);
+//     } catch (err) {
+//         res.status(500).json({ message: err.message });
+//     }
+// });
+// Get All Tasks with Search and Filter
 
 router.get('/', authenticate, function _callee2(req, res) {
-  var tasks;
+  var filters, tasks;
   return regeneratorRuntime.async(function _callee2$(_context2) {
     while (1) {
       switch (_context2.prev = _context2.next) {
         case 0:
           _context2.prev = 0;
-          _context2.next = 3;
-          return regeneratorRuntime.awrap(Task.find({
+          // Initialize the filters object
+          filters = {
             user: req.user._id
-          }));
+          }; // Ensure it only returns the user's tasks
+          // Dynamically add filters if query parameters are present
 
-        case 3:
-          tasks = _context2.sent;
-          res.json(tasks);
-          _context2.next = 10;
-          break;
+          if (req.query.title) {
+            filters.title = {
+              $regex: req.query.title,
+              $options: 'i'
+            }; // Case-insensitive search
+          }
+
+          if (req.query.status) {
+            filters.status = req.query.status;
+          }
+
+          if (req.query.user) {
+            filters.user = req.query.user;
+          } // Find tasks using the filters
+
+
+          _context2.next = 7;
+          return regeneratorRuntime.awrap(Task.find(filters));
 
         case 7:
-          _context2.prev = 7;
+          tasks = _context2.sent;
+          res.json(tasks);
+          _context2.next = 14;
+          break;
+
+        case 11:
+          _context2.prev = 11;
           _context2.t0 = _context2["catch"](0);
           res.status(500).json({
             message: _context2.t0.message
           });
 
-        case 10:
+        case 14:
         case "end":
           return _context2.stop();
       }
     }
-  }, null, null, [[0, 7]]);
+  }, null, null, [[0, 11]]);
 }); // Update Task
 
 router.put('/:id', authenticate, function _callee3(req, res) {

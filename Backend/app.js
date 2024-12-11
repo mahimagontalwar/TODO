@@ -1,28 +1,32 @@
 const express = require('express');
+const app = express();
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+
 const authRoutes = require('./routes/auth');
-const taskRoutes = require('./routes/tasks');
+const taskRoutes = require('./routes/tasks.js');
 
-const app = express();
-const cors = require('cors');
-app.use(cors());
 // Middleware
-app.use(express.json());
+const cors = require('cors');
+app.use(cors({
+  origin: 'http://localhost:3000', // Frontend origin
+  methods: ['GET', 'POST'],
+}));
 
+app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Error Handling Middleware
+// Error Haappndling Middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Internal Server Error' });
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB connected'))
     .catch((err) => console.error('Database connection failed:', err));
 
