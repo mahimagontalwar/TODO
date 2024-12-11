@@ -10,7 +10,9 @@ require('dotenv').config();
 
 var authRoutes = require('./routes/auth');
 
-var taskRoutes = require('./routes/tasks.js'); // Middleware
+var taskRoutes = require('./routes/tasks.js');
+
+var instituteRoutes = require('./routes/instituteRoutes'); // Middleware
 
 
 var cors = require('cors');
@@ -23,7 +25,8 @@ app.use(cors({
 app.use(express.json()); // Routes
 
 app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes); // Error Haappndling Middleware
+app.use('/api/tasks', taskRoutes);
+app.use('/api', instituteRoutes); // Error Haappndling Middleware
 
 app.use(function (err, req, res, next) {
   console.error(err.stack);

@@ -6,7 +6,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks.js');
-
+const instituteRoutes = require('./routes/instituteRoutes');
 // Middleware
 const cors = require('cors');
 app.use(cors({
@@ -18,7 +18,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
-
+app.use('/api', instituteRoutes);
 // Error Haappndling Middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
