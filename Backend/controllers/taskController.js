@@ -6,16 +6,71 @@ const multer = require("multer");
 // Import the PDFKit library
 const PDFDocument = require("pdfkit");
 const XLSX = require("xlsx");
-
 const upload = multer({
   dest: "uploads/",
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
+exports.getTasksWithProjects = async (req, res) => {
+  try {
+    // Log the user ID from the request to check it's correct
+    console.log('User ID from request:', req.user._id);
 
+    // Aggregate query to match tasks by user ID
+    const tasks = await Task.aggregate([
+      {
+        $match: { user:new mongoose.Types.ObjectId(req.user._id) } // Ensure the ID is in ObjectId format
+      },
+      {
+        $lookup: {
+          from: 'projects', // Ensure the collection name is 'projects'
+          localField: 'project', // The field in Task referencing Project
+          foreignField: '_id', // Reference field in the Project collection
+          as: 'projectDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$projectDetails', // Unwind the array of project details
+          preserveNullAndEmptyArrays: true // Allow tasks without projects
+        }
+      },
+      {
+        $project: {
+          title: 1,
+          description: 1,
+          status: 1,
+          'projectDetails.name': 1,
+          'projectDetails.description': 1,
+          'projectDetails.startDate': 1,
+          'projectDetails.endDate': 1
+        }
+      }
+    ]);
 
+    // Log the tasks retrieved to help with debugging
+    console.log('Tasks found:', tasks);
 
+    if (tasks.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No tasks found for the user.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      tasks: tasks
+    });
+  } catch (error) {
+    console.error('Error in getTasksWithProjects:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Please try again later.'
+    });
+  }
+};
 // Import the xlsx library
 exports.exportTasks = async (req, res) => {
   try {
@@ -213,5 +268,46 @@ exports.importTasks =
         res.status(500).send("Error importing tasks");
       }
     };
+    
 
-
+    exports.getTasksWithInstituteAggregation = async (req, res) => {
+      try {
+        const tasks = await Task.aggregate([
+          // Match stage: Ensure we are getting tasks that have an associated institute
+          { $match: { institute: { $ne: null } } },
+          // Lookup stage: Join with the institutes collection based on the institute reference
+          {
+            $lookup: {
+              from: 'institutes', // The name of the institute collection
+              localField: 'institute', // The field in tasks that references institute
+              foreignField: '_id', // The _id field in institutes collection
+              as: 'instituteDetails', // The field where we want to store the results
+            },
+          },
+          // Unwind stage: Flatten the instituteDetails array
+          { $unwind: '$instituteDetails' },
+          // Optional: Project the fields you want to return
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              description: 1,
+              dueDate: 1,
+              'instituteDetails.name': 1,
+              'instituteDetails.location': 1,
+              'instituteDetails.type': 1,
+            },
+          },
+        ]);
+    
+        if (tasks.length === 0) {
+          return res.status(404).json({ success: false, message: 'No tasks found.' });
+        }
+    
+        res.json({ success: true, data: tasks });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
+      }
+    };
+    

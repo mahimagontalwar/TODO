@@ -3,7 +3,7 @@ const app = express();
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-
+const projectRoutes = require('./routes/projectRoutes');
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks.js');
 const instituteRoutes = require('./routes/instituteRoutes');
@@ -13,12 +13,14 @@ app.use(cors({
   origin: 'http://localhost:3000', // Frontend origin
   methods: ['GET', 'POST'],
 }));
-
+//const tasksAndProjectsRoutes = require('./routes/tasksAndProjects');
 app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api', instituteRoutes);
+app.use('/api/projects', projectRoutes);
+
 // Error Haappndling Middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);

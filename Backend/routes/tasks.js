@@ -4,9 +4,13 @@ const authenticate = require('../middlewares/auth');
 const { body, validationResult } = require('express-validator');
 const { validateTask } = require('../validators/taskValidators');
 const router = express.Router();
-const { exportTasks } = require('../controllers/taskController');
-const { importTasks } = require('../controllers/taskController');
+//const {  getTasksWithProjects } = require('../controllers/taskController');
+const { exportTasks,importTasks } = require('../controllers/taskController');
 const { exportTasksAsPDF } = require('../controllers/taskController');
+const { getTasksWithProjects } = require('../controllers/taskController');
+
+// Route to get tasks with project details
+router.get('/tasks-with-project',authenticate,getTasksWithProjects);
 // In tasks.js (routes file)
 const multer = require('multer');
 // Set up multer for file upload with a file size limit of 10MB
@@ -16,15 +20,16 @@ const upload = multer({
       fileSize: 10 * 1024 * 1024, // Limit file size to 10MB
     },
   });
+   router.get('/export',authenticate, exportTasks);
+ router.get('/export/pdf',authenticate, exportTasksAsPDF);
 
+ router.post('/import', upload.single('file'), importTasks);
 
-router.get('/export',authenticate, exportTasks);
 // router.post('/import',upload.single('file'), importTasks);
 // Define the import route
-// Export tasks as PDF
-router.get('/export/pdf',authenticate, exportTasksAsPDF);
+// // Export tasks as PDF
 
-router.post('/import', upload.single('file'), importTasks);
+
 
 // Create Task
 router.post(
@@ -45,15 +50,7 @@ router.post(
     }
 );
 
-// // Get All Tasks
-// router.get('/', authenticate, async (req, res) => {
-//     try {
-//         const tasks = await Task.find({ user: req.user._id });
-//         res.json(tasks);
-//     } catch (err) {
-//         res.status(500).json({ message: err.message });
-//     }
-// });
+
 
 // Get All Tasks with Search and Filter
 router.get('/', authenticate, async (req, res) => {
@@ -110,7 +107,5 @@ router.delete('/:id', authenticate, async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
-
-
 
 module.exports = router;

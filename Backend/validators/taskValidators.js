@@ -5,7 +5,8 @@ const validateTask = (req, res, next) => {
     title: Joi.string().max(10),
     description: Joi.string().max(20),
     status: Joi.string().max(10).required(),
-    user:Joi.string()
+    user:Joi.string(),
+    project:Joi.string()
   });
 
   const { error } = schema.validate(req.body);

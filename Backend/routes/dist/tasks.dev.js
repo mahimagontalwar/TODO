@@ -19,17 +19,20 @@ var _require = require('express-validator'),
 var _require2 = require('../validators/taskValidators'),
     validateTask = _require2.validateTask;
 
-var router = express.Router();
+var router = express.Router(); //const {  getTasksWithProjects } = require('../controllers/taskController');
 
 var _require3 = require('../controllers/taskController'),
-    exportTasks = _require3.exportTasks;
+    exportTasks = _require3.exportTasks,
+    importTasks = _require3.importTasks;
 
 var _require4 = require('../controllers/taskController'),
-    importTasks = _require4.importTasks;
+    exportTasksAsPDF = _require4.exportTasksAsPDF;
 
 var _require5 = require('../controllers/taskController'),
-    exportTasksAsPDF = _require5.exportTasksAsPDF; // In tasks.js (routes file)
+    getTasksWithProjects = _require5.getTasksWithProjects; // Route to get tasks with project details
 
+
+router.get('/tasks-with-project', authenticate, getTasksWithProjects); // In tasks.js (routes file)
 
 var multer = require('multer'); // Set up multer for file upload with a file size limit of 10MB
 
@@ -42,12 +45,12 @@ var upload = multer({
 
   }
 });
-router.get('/export', authenticate, exportTasks); // router.post('/import',upload.single('file'), importTasks);
-// Define the import route
-// Export tasks as PDF
-
+router.get('/export', authenticate, exportTasks);
 router.get('/export/pdf', authenticate, exportTasksAsPDF);
-router.post('/import', upload.single('file'), importTasks); // Create Task
+router.post('/import', upload.single('file'), importTasks); // router.post('/import',upload.single('file'), importTasks);
+// Define the import route
+// // Export tasks as PDF
+// Create Task
 
 router.post('/', authenticate, validateTask, body('title').notEmpty().withMessage('Title is required'), function _callee(req, res) {
   var errors, task;
@@ -92,16 +95,7 @@ router.post('/', authenticate, validateTask, body('title').notEmpty().withMessag
       }
     }
   }, null, null, [[3, 10]]);
-}); // // Get All Tasks
-// router.get('/', authenticate, async (req, res) => {
-//     try {
-//         const tasks = await Task.find({ user: req.user._id });
-//         res.json(tasks);
-//     } catch (err) {
-//         res.status(500).json({ message: err.message });
-//     }
-// });
-// Get All Tasks with Search and Filter
+}); // Get All Tasks with Search and Filter
 
 router.get('/', authenticate, function _callee2(req, res) {
   var filters, tasks;
