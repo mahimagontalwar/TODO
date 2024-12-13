@@ -1,7 +1,13 @@
 "use strict";
 
 // In tasksController.js
-var Task = require("../models/task"); // Your Task model
+var Task = require("../models/task");
+
+var Project = require('../models/project');
+
+var Client = require('../models/Client');
+
+var Order = require('../models/Order'); // Your Task model
 
 
 var fs = require("fs");
@@ -23,87 +29,78 @@ var upload = multer({
   }
 });
 
-exports.getTasksWithProjects = function _callee(req, res) {
-  var tasks;
+exports.allDataRoutes = function _callee(req, res) {
+  var tasks, projects, orders;
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
           _context.prev = 0;
-          // Log the user ID from the request to check it's correct
-          console.log('User ID from request:', req.user._id); // Aggregate query to match tasks by user ID
-
-          _context.next = 4;
+          _context.next = 3;
           return regeneratorRuntime.awrap(Task.aggregate([{
-            $match: {
-              user: new mongoose.Types.ObjectId(req.user._id)
-            } // Ensure the ID is in ObjectId format
-
-          }, {
             $lookup: {
-              from: 'projects',
-              // Ensure the collection name is 'projects'
-              localField: 'project',
-              // The field in Task referencing Project
+              from: 'users',
+              // Assuming there's a User collection
+              localField: 'user',
               foreignField: '_id',
-              // Reference field in the Project collection
-              as: 'projectDetails'
+              as: 'userDetails'
             }
           }, {
-            $unwind: {
-              path: '$projectDetails',
-              // Unwind the array of project details
-              preserveNullAndEmptyArrays: true // Allow tasks without projects
-
-            }
+            $unwind: '$userDetails'
           }, {
             $project: {
               title: 1,
               description: 1,
               status: 1,
-              'projectDetails.name': 1,
-              'projectDetails.description': 1,
-              'projectDetails.startDate': 1,
-              'projectDetails.endDate': 1
+              user: '$userDetails.name' // Assuming the User schema has a name field
+
             }
           }]));
 
-        case 4:
+        case 3:
           tasks = _context.sent;
-          // Log the tasks retrieved to help with debugging
-          console.log('Tasks found:', tasks);
+          _context.next = 6;
+          return regeneratorRuntime.awrap(Project.aggregate([{
+            $project: {
+              title: 1,
+              description: 1
+            }
+          }]));
 
-          if (!(tasks.length === 0)) {
-            _context.next = 8;
-            break;
-          }
+        case 6:
+          projects = _context.sent;
+          _context.next = 9;
+          return regeneratorRuntime.awrap(Order.aggregate([{
+            $project: {
+              orderId: 1,
+              totalAmount: 1
+            }
+          }]));
 
-          return _context.abrupt("return", res.status(404).json({
-            success: false,
-            message: 'No tasks found for the user.'
-          }));
+        case 9:
+          orders = _context.sent;
+          // Send the response with all three collections' data
+          res.json({
+            tasks: tasks,
+            projects: projects,
+            orders: orders
+          });
+          _context.next = 16;
+          break;
 
-        case 8:
-          return _context.abrupt("return", res.status(200).json({
-            success: true,
-            tasks: tasks
-          }));
-
-        case 11:
-          _context.prev = 11;
+        case 13:
+          _context.prev = 13;
           _context.t0 = _context["catch"](0);
-          console.error('Error in getTasksWithProjects:', _context.t0);
-          return _context.abrupt("return", res.status(500).json({
-            success: false,
-            message: 'Server error. Please try again later.'
-          }));
+          res.status(500).json({
+            message: _context.t0.message
+          });
 
-        case 15:
+        case 16:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[0, 11]]);
+  }, null, null, [[0, 13]]);
 }; // Import the xlsx library
 
 

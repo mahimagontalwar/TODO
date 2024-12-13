@@ -3,114 +3,79 @@
 var Project = require('../models/project');
 
 var createProject = function createProject(req, res) {
-  var _req$body, name, description, startDate, endDate, newProject, savedProject;
+  var _req$body, title, description, existingProject, newProject;
 
   return regeneratorRuntime.async(function createProject$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
-          _req$body = req.body, name = _req$body.name, description = _req$body.description, startDate = _req$body.startDate, endDate = _req$body.endDate; // Validate that all required fields are provided
+          _context.prev = 0;
+          _req$body = req.body, title = _req$body.title, description = _req$body.description; // Validate request
 
-          if (!(!name || !description || !startDate || !endDate)) {
-            _context.next = 3;
+          if (!(!title || !description)) {
+            _context.next = 4;
             break;
           }
 
           return _context.abrupt("return", res.status(400).json({
-            success: false,
-            message: 'Please provide all required fields: name, description, startDate, and endDate.'
+            error: 'Both title and description are required.'
           }));
 
-        case 3:
-          _context.prev = 3;
-          // Create a new project with the provided data
+        case 4:
+          _context.next = 6;
+          return regeneratorRuntime.awrap(Project.findOne({
+            title: title
+          }));
+
+        case 6:
+          existingProject = _context.sent;
+
+          if (!existingProject) {
+            _context.next = 9;
+            break;
+          }
+
+          return _context.abrupt("return", res.status(400).json({
+            message: "project with this title already exists."
+          }));
+
+        case 9:
+          // Create a new project
           newProject = new Project({
-            name: name,
-            description: description,
-            startDate: startDate,
-            endDate: endDate
+            title: title,
+            description: description // Optional: Initialize with provided tasks or an empty array
+
           }); // Save the project to the database
 
-          _context.next = 7;
+          _context.next = 12;
           return regeneratorRuntime.awrap(newProject.save());
 
-        case 7:
-          savedProject = _context.sent;
-          // Return the saved project
+        case 12:
           res.status(201).json({
-            success: true,
-            data: savedProject
+            message: 'Project created successfully',
+            title: newProject.title,
+            description: newProject.description,
+            _id: newProject._id,
+            __v: newProject.__v
           });
-          _context.next = 15;
+          _context.next = 18;
           break;
 
-        case 11:
-          _context.prev = 11;
-          _context.t0 = _context["catch"](3);
-          console.error(_context.t0);
+        case 15:
+          _context.prev = 15;
+          _context.t0 = _context["catch"](0);
           res.status(500).json({
-            success: false,
-            message: 'Server error. Could not create project.'
+            error: _context.t0.message
           });
 
-        case 15:
+        case 18:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[3, 11]]);
-}; // Get all projects
-
-
-var getProjects = function getProjects(req, res) {
-  var projects;
-  return regeneratorRuntime.async(function getProjects$(_context2) {
-    while (1) {
-      switch (_context2.prev = _context2.next) {
-        case 0:
-          _context2.prev = 0;
-          _context2.next = 3;
-          return regeneratorRuntime.awrap(Project.find());
-
-        case 3:
-          projects = _context2.sent;
-
-          if (!(projects.length === 0)) {
-            _context2.next = 6;
-            break;
-          }
-
-          return _context2.abrupt("return", res.status(404).json({
-            success: false,
-            message: 'No projects found.'
-          }));
-
-        case 6:
-          res.json({
-            success: true,
-            data: projects
-          });
-          _context2.next = 13;
-          break;
-
-        case 9:
-          _context2.prev = 9;
-          _context2.t0 = _context2["catch"](0);
-          console.error(_context2.t0);
-          res.status(500).json({
-            success: false,
-            message: 'Server error'
-          });
-
-        case 13:
-        case "end":
-          return _context2.stop();
-      }
-    }
-  }, null, null, [[0, 9]]);
+  }, null, null, [[0, 15]]);
 };
 
 module.exports = {
-  createProject: createProject,
-  getProjects: getProjects
+  createProject: createProject
 };

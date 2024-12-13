@@ -3,11 +3,8 @@
 var express = require('express');
 
 var _require = require('../controllers/projectController'),
-    createProject = _require.createProject,
-    getProjects = _require.getProjects;
+    createProject = _require.createProject;
 
 var router = express.Router();
-router.post('/', createProject); // Route for fetching all projects
-
-router.get('/', getProjects);
+router.post('/', createProject);
 module.exports = router;

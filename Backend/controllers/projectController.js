@@ -1,54 +1,35 @@
 const Project = require('../models/project');
 const createProject = async (req, res) => {
-    const { name, description, startDate, endDate } = req.body;
-  
-    // Validate that all required fields are provided
-    if (!name || !description || !startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide all required fields: name, description, startDate, and endDate.',
-      });
-    }
-  
-    try {
-      // Create a new project with the provided data
-      const newProject = new Project({
-        name,
-        description,
-        startDate,
-        endDate,
-      });
-  
-      // Save the project to the database
-      const savedProject = await newProject.save();
-  
-      // Return the saved project
-      res.status(201).json({
-        success: true,
-        data: savedProject,
-      });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({
-        success: false,
-        message: 'Server error. Could not create project.',
-      });
-    }
-  };
-  
-
-// Get all projects
-const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find();
-    if (projects.length === 0) {
-      return res.status(404).json({ success: false, message: 'No projects found.' });
+    const { title, description } = req.body;
+
+    // Validate request
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Both title and description are required.' });
     }
-    res.json({ success: true, data: projects });
+    const existingProject = await Project.findOne({ title: title });
+    if (existingProject) {
+        return res.status(400).json({ message: "project with this title already exists." });
+      }
+    // Create a new project
+    const newProject = new Project({
+      title,
+      description // Optional: Initialize with provided tasks or an empty array
+    });
+
+    // Save the project to the database
+     await newProject.save();
+
+    res.status(201).json({
+      message: 'Project created successfully',
+      title: newProject.title,
+      description: newProject.description,
+      _id: newProject._id,
+      __v: newProject.__v
+
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ error: error.message });
   }
 };
-
-module.exports = { createProject,getProjects };
+module.exports = {createProject };

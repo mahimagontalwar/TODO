@@ -1,11 +1,5 @@
 "use strict";
 
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 var express = require('express');
 
 var Task = require('../models/task');
@@ -19,20 +13,19 @@ var _require = require('express-validator'),
 var _require2 = require('../validators/taskValidators'),
     validateTask = _require2.validateTask;
 
-var router = express.Router(); //const {  getTasksWithProjects } = require('../controllers/taskController');
+var router = express.Router();
 
 var _require3 = require('../controllers/taskController'),
     exportTasks = _require3.exportTasks,
-    importTasks = _require3.importTasks;
+    importTasks = _require3.importTasks,
+    allDataRoutes = _require3.allDataRoutes;
 
 var _require4 = require('../controllers/taskController'),
-    exportTasksAsPDF = _require4.exportTasksAsPDF;
-
-var _require5 = require('../controllers/taskController'),
-    getTasksWithProjects = _require5.getTasksWithProjects; // Route to get tasks with project details
+    exportTasksAsPDF = _require4.exportTasksAsPDF; //const { getTasksWithProjects } = require('../controllers/taskController');
+// Route to get tasks with project details
 
 
-router.get('/tasks-with-project', authenticate, getTasksWithProjects); // In tasks.js (routes file)
+router.get('/with-project-order', authenticate, allDataRoutes); // In tasks.js (routes file)
 
 var multer = require('multer'); // Set up multer for file upload with a file size limit of 10MB
 
@@ -53,15 +46,17 @@ router.post('/import', upload.single('file'), importTasks); // router.post('/imp
 // Create Task
 
 router.post('/', authenticate, validateTask, body('title').notEmpty().withMessage('Title is required'), function _callee(req, res) {
-  var errors, task;
+  var _req$body, title, description, status, errors, existingTask, task;
+
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
+          _req$body = req.body, title = _req$body.title, description = _req$body.description, status = _req$body.status;
           errors = validationResult(req);
 
           if (errors.isEmpty()) {
-            _context.next = 3;
+            _context.next = 4;
             break;
           }
 
@@ -69,32 +64,53 @@ router.post('/', authenticate, validateTask, body('title').notEmpty().withMessag
             errors: errors.array()
           }));
 
-        case 3:
-          _context.prev = 3;
-          task = new Task(_objectSpread({}, req.body, {
-            user: req.user._id
-          }));
+        case 4:
+          _context.prev = 4;
           _context.next = 7;
-          return regeneratorRuntime.awrap(task.save());
+          return regeneratorRuntime.awrap(Task.findOne({
+            title: title
+          }));
 
         case 7:
-          res.status(201).json(task);
-          _context.next = 13;
-          break;
+          existingTask = _context.sent;
+
+          if (!existingTask) {
+            _context.next = 10;
+            break;
+          }
+
+          return _context.abrupt("return", res.status(400).json({
+            message: "Task with this title already exists."
+          }));
 
         case 10:
-          _context.prev = 10;
-          _context.t0 = _context["catch"](3);
+          task = new Task({
+            title: title,
+            description: description,
+            status: status,
+            user: req.user._id
+          });
+          _context.next = 13;
+          return regeneratorRuntime.awrap(task.save());
+
+        case 13:
+          res.status(201).json(task);
+          _context.next = 19;
+          break;
+
+        case 16:
+          _context.prev = 16;
+          _context.t0 = _context["catch"](4);
           res.status(500).json({
             message: _context.t0.message
           });
 
-        case 13:
+        case 19:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[3, 10]]);
+  }, null, null, [[4, 16]]);
 }); // Get All Tasks with Search and Filter
 
 router.get('/', authenticate, function _callee2(req, res) {

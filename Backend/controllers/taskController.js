@@ -1,5 +1,8 @@
 // In tasksController.js
-const Task = require("../models/task"); // Your Task model
+const Task = require("../models/task");
+const Project = require('../models/project');
+const Client = require('../models/Client');
+const Order = require('../models/Order'); // Your Task model
 const fs = require("fs");
 const mongoose = require('mongoose');
 const multer = require("multer");
@@ -12,65 +15,62 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
-exports.getTasksWithProjects = async (req, res) => {
+exports.allDataRoutes= async (req, res) => {
   try {
-    // Log the user ID from the request to check it's correct
-    console.log('User ID from request:', req.user._id);
-
-    // Aggregate query to match tasks by user ID
+    // Fetch tasks with population and aggregation
     const tasks = await Task.aggregate([
       {
-        $match: { user:new mongoose.Types.ObjectId(req.user._id) } // Ensure the ID is in ObjectId format
-      },
-      {
         $lookup: {
-          from: 'projects', // Ensure the collection name is 'projects'
-          localField: 'project', // The field in Task referencing Project
-          foreignField: '_id', // Reference field in the Project collection
-          as: 'projectDetails'
-        }
+          from: 'users', // Assuming there's a User collection
+          localField: 'user',
+          foreignField: '_id',
+          as: 'userDetails',
+        },
       },
       {
-        $unwind: {
-          path: '$projectDetails', // Unwind the array of project details
-          preserveNullAndEmptyArrays: true // Allow tasks without projects
-        }
+        $unwind: '$userDetails',
       },
       {
         $project: {
           title: 1,
           description: 1,
           status: 1,
-          'projectDetails.name': 1,
-          'projectDetails.description': 1,
-          'projectDetails.startDate': 1,
-          'projectDetails.endDate': 1
-        }
-      }
+          user: '$userDetails.name', // Assuming the User schema has a name field
+        },
+      },
     ]);
 
-    // Log the tasks retrieved to help with debugging
-    console.log('Tasks found:', tasks);
+    // Fetch projects
+    const projects = await Project.aggregate([
+      {
+        $project: {
+          title: 1,
+          description: 1,
+        },
+      },
+    ]);
 
-    if (tasks.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'No tasks found for the user.'
-      });
-    }
+    // Fetch orders
+    const orders = await Order.aggregate([
+      {
+        $project: {
+          orderId: 1,
+          totalAmount: 1,
+        },
+      },
+    ]);
 
-    return res.status(200).json({
-      success: true,
-      tasks: tasks
+    // Send the response with all three collections' data
+    res.json({
+      tasks,
+      projects,
+      orders,
     });
   } catch (error) {
-    console.error('Error in getTasksWithProjects:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error. Please try again later.'
-    });
+    res.status(500).json({ message: error.message });
   }
 };
+
 // Import the xlsx library
 exports.exportTasks = async (req, res) => {
   try {

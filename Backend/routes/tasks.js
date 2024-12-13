@@ -4,13 +4,13 @@ const authenticate = require('../middlewares/auth');
 const { body, validationResult } = require('express-validator');
 const { validateTask } = require('../validators/taskValidators');
 const router = express.Router();
-//const {  getTasksWithProjects } = require('../controllers/taskController');
-const { exportTasks,importTasks } = require('../controllers/taskController');
+
+const { exportTasks,importTasks, allDataRoutes } = require('../controllers/taskController');
 const { exportTasksAsPDF } = require('../controllers/taskController');
-const { getTasksWithProjects } = require('../controllers/taskController');
+//const { getTasksWithProjects } = require('../controllers/taskController');
 
 // Route to get tasks with project details
-router.get('/tasks-with-project',authenticate,getTasksWithProjects);
+router.get('/with-project-order',authenticate,allDataRoutes);
 // In tasks.js (routes file)
 const multer = require('multer');
 // Set up multer for file upload with a file size limit of 10MB
@@ -37,11 +37,16 @@ router.post(
     authenticate,validateTask,
     body('title').notEmpty().withMessage('Title is required'),
     async (req, res) => {
+        const { title, description,status } = req.body; 
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
         try {
-            const task = new Task({ ...req.body, user: req.user._id });
+            const existingTask = await Task.findOne({ title: title });
+            if (existingTask) {
+                return res.status(400).json({ message: "Task with this title already exists." });
+              }
+            const task = new Task({ title,description,status ,user: req.user._id });
             await task.save();
             res.status(201).json(task);
         } catch (err) {

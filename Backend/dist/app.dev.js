@@ -8,6 +8,8 @@ var mongoose = require('mongoose');
 
 require('dotenv').config();
 
+var orderRoutes = require('./routes/orderRoutes');
+
 var projectRoutes = require('./routes/projectRoutes');
 
 var authRoutes = require('./routes/auth');
@@ -30,7 +32,8 @@ app.use(express.json()); // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api', instituteRoutes);
-app.use('/api/projects', projectRoutes); // Error Haappndling Middleware
+app.use('/api/projects', projectRoutes);
+app.use('/api/orders', orderRoutes); // Error Haappndling Middleware
 
 app.use(function (err, req, res, next) {
   console.error(err.stack);
