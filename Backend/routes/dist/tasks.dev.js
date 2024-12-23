@@ -15,6 +15,8 @@ var _require2 = require('../validators/taskValidators'),
 
 var router = express.Router();
 
+var ProjectSchema = require('../models/project');
+
 var _require3 = require('../controllers/taskController'),
     exportTasks = _require3.exportTasks,
     importTasks = _require3.importTasks,
@@ -46,13 +48,13 @@ router.post('/import', upload.single('file'), importTasks); // router.post('/imp
 // Create Task
 
 router.post('/', authenticate, validateTask, body('title').notEmpty().withMessage('Title is required'), function _callee(req, res) {
-  var _req$body, title, description, status, errors, existingTask, task;
+  var _req$body, title, description, status, projectId, errors, existingTask, task;
 
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
-          _req$body = req.body, title = _req$body.title, description = _req$body.description, status = _req$body.status;
+          _req$body = req.body, title = _req$body.title, description = _req$body.description, status = _req$body.status, projectId = _req$body.projectId;
           errors = validationResult(req);
 
           if (errors.isEmpty()) {
@@ -88,7 +90,8 @@ router.post('/', authenticate, validateTask, body('title').notEmpty().withMessag
             title: title,
             description: description,
             status: status,
-            user: req.user._id
+            user: req.user._id,
+            projectId: projectId
           });
           _context.next = 13;
           return regeneratorRuntime.awrap(task.save());

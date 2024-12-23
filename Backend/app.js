@@ -19,7 +19,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api', instituteRoutes);
-app.use('/api/projects', projectRoutes);
+app.use('/api', projectRoutes);
 app.use('/api/orders', orderRoutes);
 // Error Haappndling Middleware
 app.use((err, req, res, next) => {

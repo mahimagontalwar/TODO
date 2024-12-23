@@ -4,7 +4,7 @@ const authenticate = require('../middlewares/auth');
 const { body, validationResult } = require('express-validator');
 const { validateTask } = require('../validators/taskValidators');
 const router = express.Router();
-
+const ProjectSchema = require('../models/project');
 const { exportTasks,importTasks, allDataRoutes } = require('../controllers/taskController');
 const { exportTasksAsPDF } = require('../controllers/taskController');
 //const { getTasksWithProjects } = require('../controllers/taskController');
@@ -37,7 +37,7 @@ router.post(
     authenticate,validateTask,
     body('title').notEmpty().withMessage('Title is required'),
     async (req, res) => {
-        const { title, description,status } = req.body; 
+        const { title, description,status ,projectId } = req.body; 
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -46,8 +46,10 @@ router.post(
             if (existingTask) {
                 return res.status(400).json({ message: "Task with this title already exists." });
               }
-            const task = new Task({ title,description,status ,user: req.user._id });
+              
+            const task = new Task({ title,description,status ,user: req.user._id ,projectId});
             await task.save();
+            
             res.status(201).json(task);
         } catch (err) {
             res.status(500).json({ message: err.message });
