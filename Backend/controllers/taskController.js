@@ -1,7 +1,7 @@
 // In tasksController.js
 const Task = require("../models/task");
 const Project = require('../models/project');
-const Client = require('../models/Client');
+
 const Order = require('../models/Order'); // Your Task model
 const fs = require("fs");
 const mongoose = require('mongoose');
@@ -15,6 +15,72 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
+
+
+const User = require('../models/user');  // Path to your User model
+
+exports.getTasksWithProjectAndUser = async (req, res) => {
+  try {
+    const tasks = await Task.find()
+      .populate('user', 'name email')  // Populate user, selecting name and email fields
+      .populate('projectId', 'name description');  // Populate projectId, selecting name and description fields
+
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching tasks with project and user details' });
+  }
+};
+
+exports.getTasksWithProjectAndUserAggregation = async (req, res) => {
+  try {
+    const tasks = await Task.aggregate([
+      {
+        $lookup: {
+          from: 'users',  // The name of the 'User' collection (in plural form)
+          localField: 'user',  // The field in the Task collection
+          foreignField: '_id',  // The field in the User collection
+          as: 'userDetails'  // The name of the new field in the result
+        }
+      },
+      {
+        $unwind: '$userDetails'  // Flatten the userDetails array (since $lookup returns an array)
+      },
+      {
+        $lookup: {
+          from: 'projects',  // The name of the 'Project' collection (in plural form)
+          localField: 'projectId',  // The field in the Task collection
+          foreignField: '_id',  // The field in the Project collection
+          as: 'projectDetails'  // The name of the new field in the result
+        }
+      },
+      {
+        $unwind: '$projectDetails'  // Flatten the projectDetails array
+      },
+      {
+        $project: {  // Select which fields to include in the result
+          title: 1,
+          description: 1,
+          status: 1,
+          user: {  // Rename userDetails fields to a more readable structure
+            _id: '$userDetails._id',
+            name: '$userDetails.name',
+            email: '$userDetails.email'
+          },
+          projectId: {  // Rename projectDetails fields to a more readable structure
+            _id: '$projectDetails._id',
+            name: '$projectDetails.name',
+            description: '$projectDetails.description'
+          }
+        }
+      }
+    ]);
+
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching tasks with project and user details (aggregation)' });
+  }
+};
+
 exports.allDataRoutes= async (req, res) => {
   try {
     // Fetch tasks with population and aggregation

@@ -20,11 +20,12 @@ var ProjectSchema = require('../models/project');
 var _require3 = require('../controllers/taskController'),
     exportTasks = _require3.exportTasks,
     importTasks = _require3.importTasks,
+    getTasksWithProjectAndUserAggregation = _require3.getTasksWithProjectAndUserAggregation,
     allDataRoutes = _require3.allDataRoutes;
 
 var _require4 = require('../controllers/taskController'),
-    exportTasksAsPDF = _require4.exportTasksAsPDF; //const { getTasksWithProjects } = require('../controllers/taskController');
-// Route to get tasks with project details
+    exportTasksAsPDF = _require4.exportTasksAsPDF,
+    getTasksWithProjectAndUser = _require4.getTasksWithProjectAndUser; // Route to get tasks with project details
 
 
 router.get('/with-project-order', authenticate, allDataRoutes); // In tasks.js (routes file)
@@ -45,7 +46,9 @@ router.get('/export/pdf', authenticate, exportTasksAsPDF);
 router.post('/import', upload.single('file'), importTasks); // router.post('/import',upload.single('file'), importTasks);
 // Define the import route
 // // Export tasks as PDF
-// Create Task
+
+router.get('/populate', getTasksWithProjectAndUser);
+router.get('/aggregation', getTasksWithProjectAndUserAggregation); // Create Task
 
 router.post('/', authenticate, validateTask, body('title').notEmpty().withMessage('Title is required'), function _callee(req, res) {
   var _req$body, title, description, status, projectId, errors, existingTask, task;

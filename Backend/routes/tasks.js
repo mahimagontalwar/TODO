@@ -5,9 +5,8 @@ const { body, validationResult } = require('express-validator');
 const { validateTask } = require('../validators/taskValidators');
 const router = express.Router();
 const ProjectSchema = require('../models/project');
-const { exportTasks,importTasks, allDataRoutes } = require('../controllers/taskController');
-const { exportTasksAsPDF } = require('../controllers/taskController');
-//const { getTasksWithProjects } = require('../controllers/taskController');
+const { exportTasks,importTasks, getTasksWithProjectAndUserAggregation,allDataRoutes } = require('../controllers/taskController');
+const { exportTasksAsPDF ,getTasksWithProjectAndUser } = require('../controllers/taskController');
 
 // Route to get tasks with project details
 router.get('/with-project-order',authenticate,allDataRoutes);
@@ -28,8 +27,9 @@ const upload = multer({
 // router.post('/import',upload.single('file'), importTasks);
 // Define the import route
 // // Export tasks as PDF
+router.get('/populate', getTasksWithProjectAndUser);
 
-
+router.get('/aggregation', getTasksWithProjectAndUserAggregation);
 
 // Create Task
 router.post(
